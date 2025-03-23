@@ -56,7 +56,7 @@ const Calendar: React.FC = () => {
   };
 
   return (
-    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg">
+    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full">
       <div className="mb-4">
         <div className="text-2xl font-semibold text-neutral-200">
           {date.getDate()} {monthNames[date.getMonth()]} {date.getFullYear()}
