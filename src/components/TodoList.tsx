@@ -76,8 +76,8 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-neutral-900 p-4 rounded-lg shadow-lg h-full flex flex-col">
+      <div className="flex justify-between items-center mb-3">
         <h2 className="text-xl font-semibold text-neutral-200 font-sans">Todo list</h2>
         <button 
           className="text-neutral-400 hover:text-neutral-200" 
@@ -93,21 +93,21 @@ const TodoList: React.FC = () => {
         </button>
       </div>
       
-      <ul className="space-y-2 mb-4 flex-grow overflow-y-auto font-sans">
+      <ul className="space-y-1 mb-3 flex-grow overflow-y-auto font-sans">
         {todos.map(todo => (
-          <li key={todo.id} className="flex items-center gap-2">
+          <li key={todo.id} className="flex items-start gap-2">
             <input
               type="checkbox"
               checked={todo.completed}
               onChange={() => toggleTodo(todo.id)}
-              className="h-4 w-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 mt-1 rounded border-gray-600 text-blue-600 focus:ring-blue-500 flex-shrink-0"
             />
-            <span className={`flex-1 text-neutral-300 ${todo.completed ? 'line-through text-neutral-500' : ''}`}>
+            <span className={`text-neutral-300 ${todo.completed ? 'line-through text-neutral-500' : ''}`}>
               {todo.text}
             </span>
             <button 
               onClick={() => deleteTodo(todo.id)}
-              className="text-neutral-500 hover:text-red-500"
+              className="ml-auto text-neutral-500 hover:text-red-500 flex-shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -124,11 +124,11 @@ const TodoList: React.FC = () => {
           onChange={(e) => setNewTodo(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addTodo()}
           placeholder="Add task"
-          className="flex-1 bg-neutral-800 text-neutral-200 px-3 py-2 rounded border border-neutral-700 focus:ring-blue-500 focus:border-blue-500 font-sans"
+          className="flex-1 bg-neutral-800 text-neutral-200 px-2 py-1 rounded border border-neutral-700 focus:ring-blue-500 focus:border-blue-500 font-sans text-sm"
         />
         <button
           onClick={addTodo}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-sans"
+          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 font-sans text-sm"
         >
           Add
         </button>
