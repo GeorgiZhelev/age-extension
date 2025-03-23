@@ -67,9 +67,4 @@ a {
 a:hover {
     text-decoration: underline;
 }
-
-/* Use Space Mono for age counter and time display */
-.text-8xl, .text-[10rem], .text-3xl, .text-5xl {
-    font-family: 'Space Mono', monospace;
-}
   

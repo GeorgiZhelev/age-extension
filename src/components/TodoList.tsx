@@ -76,7 +76,7 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg">
+    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-neutral-200 font-sans">Todo list</h2>
         <button 
@@ -93,7 +93,7 @@ const TodoList: React.FC = () => {
         </button>
       </div>
       
-      <ul className="space-y-2 mb-4 max-h-60 overflow-y-auto font-sans">
+      <ul className="space-y-2 mb-4 flex-grow overflow-y-auto font-sans">
         {todos.map(todo => (
           <li key={todo.id} className="flex items-center gap-2">
             <input
@@ -117,7 +117,7 @@ const TodoList: React.FC = () => {
         ))}
       </ul>
       
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-auto">
         <input
           type="text"
           value={newTodo}

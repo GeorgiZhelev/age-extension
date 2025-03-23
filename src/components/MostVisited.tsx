@@ -37,6 +37,13 @@ const MostVisited: React.FC = () => {
           { url: 'https://www.youtube.com', title: 'YouTube', favicon: 'https://www.youtube.com/favicon.ico' },
           { url: 'https://www.openai.com', title: 'OpenAI', favicon: 'https://www.openai.com/favicon.ico' },
           { url: 'https://www.stackoverflow.com', title: 'Stack Overflow', favicon: 'https://www.stackoverflow.com/favicon.ico' },
+          { url: 'https://www.twitter.com', title: 'Twitter', favicon: 'https://twitter.com/favicon.ico' },
+          { url: 'https://www.reddit.com', title: 'Reddit', favicon: 'https://www.reddit.com/favicon.ico' },
+          { url: 'https://www.netflix.com', title: 'Netflix', favicon: 'https://www.netflix.com/favicon.ico' },
+          { url: 'https://www.amazon.com', title: 'Amazon', favicon: 'https://www.amazon.com/favicon.ico' },
+          { url: 'https://www.wikipedia.org', title: 'Wikipedia', favicon: 'https://www.wikipedia.org/favicon.ico' },
+          { url: 'https://www.linkedin.com', title: 'LinkedIn', favicon: 'https://www.linkedin.com/favicon.ico' },
+          { url: 'https://www.instagram.com', title: 'Instagram', favicon: 'https://www.instagram.com/favicon.ico' },
         ]);
       } finally {
         setIsLoading(false);
@@ -64,14 +71,14 @@ const MostVisited: React.FC = () => {
     return colors[Math.abs(hash) % colors.length];
   };
 
-  // Group sites into rows of 10 for full width display
+  // Group sites into rows of 6 (instead of 10)
   const rows = [];
-  for (let i = 0; i < 30; i += 10) {
-    rows.push(topSites.slice(i, i + 10));
+  for (let i = 0; i < 30; i += 6) {
+    rows.push(topSites.slice(i, i + 6));
   }
 
   return (
-    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg w-full">
+    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full">
       <h2 className="text-xl font-semibold text-neutral-200 mb-4 font-sans">Most Visited</h2>
       
       {isLoading ? (
@@ -79,9 +86,9 @@ const MostVisited: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
         </div>
       ) : (
-        <div className="grid gap-y-6">
-          {rows.slice(0, 3).map((row, rowIndex) => (
-            <div key={rowIndex} className="grid grid-cols-10 gap-4">
+        <div className="grid gap-y-4">
+          {rows.slice(0, 5).map((row, rowIndex) => (
+            <div key={rowIndex} className="grid grid-cols-6 gap-4">
               {row.map((site, index) => (
                 <a
                   key={`${rowIndex}-${index}`}
@@ -113,7 +120,7 @@ const MostVisited: React.FC = () => {
               ))}
               
               {/* Fill empty slots in the row */}
-              {Array.from({ length: Math.max(0, 10 - row.length) }).map((_, index) => (
+              {Array.from({ length: Math.max(0, 6 - row.length) }).map((_, index) => (
                 <div key={`empty-${index}`} className="w-12 h-12" />
               ))}
             </div>
