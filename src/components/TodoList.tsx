@@ -78,7 +78,7 @@ const TodoList: React.FC = () => {
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-neutral-200">Todo list</h2>
+        <h2 className="text-xl font-semibold text-neutral-200 font-sans">Todo list</h2>
         <button 
           className="text-neutral-400 hover:text-neutral-200" 
           onClick={() => {
@@ -93,7 +93,7 @@ const TodoList: React.FC = () => {
         </button>
       </div>
       
-      <ul className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+      <ul className="space-y-2 mb-4 max-h-60 overflow-y-auto font-sans">
         {todos.map(todo => (
           <li key={todo.id} className="flex items-center gap-2">
             <input
@@ -124,11 +124,11 @@ const TodoList: React.FC = () => {
           onChange={(e) => setNewTodo(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addTodo()}
           placeholder="Add task"
-          className="flex-1 bg-neutral-800 text-neutral-200 px-3 py-2 rounded border border-neutral-700 focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 bg-neutral-800 text-neutral-200 px-3 py-2 rounded border border-neutral-700 focus:ring-blue-500 focus:border-blue-500 font-sans"
         />
         <button
           onClick={addTodo}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-sans"
         >
           Add
         </button>

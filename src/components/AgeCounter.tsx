@@ -40,12 +40,12 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate }) => {
   }, [birthDate]);
 
   return (
-    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg">
+    <div className="bg-neutral-900 p-8 rounded-lg shadow-lg">
       <div className="text-center">
-        <div className="text-xl text-neutral-300 mb-1">AGE</div>
+        <div className="text-2xl text-neutral-300 mb-2 font-light">AGE</div>
         <div className="flex justify-center items-baseline">
-          <span className="text-8xl font-normal text-neutral-300 leading-none">{wholeYears}</span>
-          <span className="text-3xl text-neutral-300 leading-none">{decimalPart}</span>
+          <span className="text-[10rem] font-light text-neutral-300 leading-none font-mono">{wholeYears}</span>
+          <span className="text-5xl text-neutral-300 leading-none font-mono">{decimalPart}</span>
         </div>
       </div>
     </div>

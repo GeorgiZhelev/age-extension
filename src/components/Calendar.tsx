@@ -5,8 +5,8 @@ const Calendar: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<Array<Date | null>>([]);
 
   useEffect(() => {
-    // Update date every minute
-    const intervalId = setInterval(() => setDate(new Date()), 60000);
+    // Update date every second instead of every minute
+    const intervalId = setInterval(() => setDate(new Date()), 1000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -46,6 +46,15 @@ const Calendar: React.FC = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Format time with hours, minutes and seconds
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg">
       <div className="mb-4">
@@ -55,8 +64,8 @@ const Calendar: React.FC = () => {
         <div className="text-lg text-neutral-400">
           {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()]}
         </div>
-        <div className="text-3xl font-bold text-neutral-200 mt-2">
-          {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div className="text-3xl font-bold text-neutral-200 mt-2 font-mono">
+          {formatTime(date)}
         </div>
       </div>
       

@@ -10,23 +10,30 @@ function App() {
   const [birthDate] = useState('1997-11-28')
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-6">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <div className="space-y-6">
-              <AgeCounter birthDate={birthDate} />
-              <Calendar />
-            </div>
+    <div className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col justify-between">
+      <div className="w-full">
+        {/* Top section - Age Counter (centered and larger) */}
+        <div className="mb-8 flex justify-center">
+          <div className="w-full md:w-2/3 lg:w-1/2">
+            <AgeCounter birthDate={birthDate} />
           </div>
-          
-          <div className="md:col-span-1">
+        </div>
+        
+        {/* Middle section - Calendar and Todo List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <Calendar />
+          </div>
+          <div>
             <TodoList />
           </div>
-          
-          <div className="md:col-span-1">
-            <MostVisited />
-          </div>
+        </div>
+      </div>
+      
+      {/* Bottom section - Most Visited (centered) */}
+      <div className="w-full flex justify-center">
+        <div className="w-full">
+          <MostVisited />
         </div>
       </div>
     </div>
