@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Age Counter New Tab",
+  "version": "1.0.0",
+  "description": "A new tab page replacement with an age counter and other widgets",
+  "permissions": ["topSites", "storage"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "age-counter-newtab@example.com"
+    }
+  },
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  }
+} 
