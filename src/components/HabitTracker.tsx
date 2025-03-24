@@ -221,21 +221,24 @@ const HabitTracker: React.FC = () => {
     });
   };
 
-  // Generate a consistent color for each habit
+  // Generate a consistent and distinct color for each habit
   const getHabitColor = (habitId: string) => {
-    // Generate a predictable color based on the habit ID
+    // Predefined set of visually distinct colors
     const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
-      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500',
-      'bg-red-500', 'bg-orange-500', 'bg-teal-500'
+      'bg-green-500',   // Bright green
+      'bg-pink-500',    // Pink
+      'bg-blue-500',    // Blue 
+      'bg-amber-500',   // Amber
+      'bg-purple-500',  // Purple
+      'bg-cyan-500',    // Cyan
+      'bg-rose-500',    // Rose
+      'bg-indigo-500',  // Indigo
+      'bg-lime-500',    // Lime
     ];
     
-    // Use a simple hash function to get a consistent index
-    const hashCode = habitId.split('').reduce(
-      (acc, char) => acc + char.charCodeAt(0), 0
-    );
-    
-    return colors[hashCode % colors.length];
+    // Find the habit's index in the habits array for consistent color assignment
+    const habitIndex = habits.findIndex(h => h.id === habitId);
+    return colors[habitIndex % colors.length];
   };
 
   // Render a combined calendar view for all habits
@@ -246,18 +249,19 @@ const HabitTracker: React.FC = () => {
     
     return (
       <div className="mt-4 overflow-y-auto pb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-medium text-neutral-300">All Habits - Past 30 Days</h3>
-          
-          {/* Color legend */}
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {habits.map(habit => (
-              <div key={habit.id} className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${getHabitColor(habit.id)}`}></div>
-                <span className="text-xs text-neutral-400 truncate max-w-24">{habit.name}</span>
-              </div>
-            ))}
-          </div>
+        {/* Centered title */}
+        <h3 className="text-sm font-medium text-neutral-300 mb-4 text-center">
+          All Habits - Past 30 Days
+        </h3>
+        
+        {/* Color legend as a horizontal list */}
+        <div className="flex flex-wrap gap-3 justify-center mb-4">
+          {habits.map((habit) => (
+            <div key={habit.id} className="flex items-center gap-1.5">
+              <div className={`w-3 h-3 rounded-full ${getHabitColor(habit.id)}`}></div>
+              <span className="text-xs text-neutral-300">{habit.name}</span>
+            </div>
+          ))}
         </div>
         
         <div className="grid grid-cols-7 gap-1 mb-2">
@@ -295,21 +299,20 @@ const HabitTracker: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-0.5 justify-center items-center">
-                  {habits.map(habit => {
+                  {habits.map((habit) => {
                     const isCompleted = habit.completedDates.includes(dateStr);
-                    const isNotCompleted = habit.notCompletedDates.includes(dateStr);
                     
-                    if (!isCompleted && !isNotCompleted) return null;
+                    // Only show dots for completed habits, not for not-completed ones
+                    if (!isCompleted) return null;
                     
                     return (
                       <button
                         key={habit.id}
                         onClick={() => toggleHabitCompletion(habit.id, dateStr)}
                         className={`
-                          w-1.5 h-1.5 rounded-full
-                          ${isCompleted ? getHabitColor(habit.id) : 'bg-red-500'}
+                          w-2 h-2 rounded-full ${getHabitColor(habit.id)}
                         `}
-                        title={`${habit.name}: ${isCompleted ? 'Completed' : 'Not completed'}`}
+                        title={`${habit.name}: Completed`}
                       />
                     );
                   })}
@@ -324,6 +327,7 @@ const HabitTracker: React.FC = () => {
 
   // Render the cumulative chart for a habit
   const renderCumulativeChart = (habit: Habit) => {
+    const habitColor = getHabitColor(habit.id).replace('bg-', 'bg-');
     const cumulativeData = calculateCumulativeCompletions(habit.id);
     const maxCumulative = cumulativeData.length > 0 ? cumulativeData[cumulativeData.length - 1].cumulative : 0;
     
@@ -342,7 +346,9 @@ const HabitTracker: React.FC = () => {
                   title={`${data.date}: ${data.cumulative} completions`}
                 >
                   <div 
-                    className="w-0.5 bg-blue-500"
+                    className={`
+                      w-0.5 h-full ${habitColor}
+                    `}
                     style={{ height: `${height}%` }}
                   ></div>
                 </div>
