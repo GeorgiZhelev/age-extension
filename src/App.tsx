@@ -8,9 +8,6 @@ import HabitTracker from './components/HabitTracker'
 import './App.css'
 
 function App() {
-  // Your birthday in ISO format
-  const [birthDate] = useState('1997-11-28')
-
   return (
     <div className="h-screen w-screen bg-neutral-950 text-white p-2 overflow-hidden">
       <div className="grid grid-cols-12 gap-3 h-full">
@@ -21,7 +18,7 @@ function App() {
         
         {/* Middle column - Age Counter (bigger) */}
         <div className="col-span-7">
-          <AgeCounter birthDate={birthDate} />
+          <AgeCounter />
         </div>
         
         {/* Right column - Todo List (narrower) */}

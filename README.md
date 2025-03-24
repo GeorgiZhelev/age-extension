@@ -7,6 +7,8 @@ A Firefox extension that replaces your new tab page with a customized dashboard 
 - **Todo List**: Manage your tasks
 - **Most Visited Sites**: Quick access to your 30 most frequently visited websites
 
+> **Note**: This extension works completely offline, with the only external network requests being to DuckDuckGo for website favicons. It has currently only been tested on Firefox.
+
 ## Features
 
 - **Age Counter**: Shows your current age with precision to 11 decimal places, updating in real-time
@@ -26,7 +28,7 @@ This project uses:
 
 ```bash
 # Install dependencies
-npm install
+npm install --legacy-peer-deps
 
 # Start development server
 npm run dev
@@ -44,7 +46,7 @@ npm run package
 2. Open Firefox and go to `about:debugging`
 3. Click "This Firefox" in the sidebar
 4. Click "Load Temporary Add-on"
-5. Select the `.zip` file from the `web-ext-artifacts` directory
+5. Browse to the extension directory and select the `manifest.json` file
 
 ## Customization
 
