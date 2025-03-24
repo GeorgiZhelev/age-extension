@@ -241,6 +241,26 @@ const HabitTracker: React.FC = () => {
     return colors[habitIndex % colors.length];
   };
 
+  // Add this function to get streak color based on the streak count
+  const getStreakColor = (streak: number): string => {
+    // Basic progression
+    if (streak === 0) return 'text-red-500';
+    if (streak === 1) return 'text-orange-500';
+    if (streak < 5) return 'text-green-400';
+    
+    // Milestone colors - create a "rainbow" progression
+    if (streak < 10) return 'text-green-500';
+    if (streak < 20) return 'text-teal-500';
+    if (streak < 30) return 'text-cyan-500';
+    if (streak < 50) return 'text-blue-500';
+    if (streak < 70) return 'text-indigo-500';
+    if (streak < 90) return 'text-purple-500';
+    if (streak < 100) return 'text-pink-500';
+    
+    // Special rainbow effect for 100+
+    return 'text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 font-bold';
+  };
+
   // Render a combined calendar view for all habits
   const renderCombinedCalendarView = () => {
     const past30Days = generatePast30Days();
@@ -592,9 +612,27 @@ const HabitTracker: React.FC = () => {
                   </svg>
                 </button>
               </div>
-              <span className="text-xs font-medium text-neutral-400">
-                Streak: {habit.streak}
-              </span>
+              <div className="flex items-center gap-1">
+                <span className={`text-xs font-medium ${getStreakColor(habit.streak)}`}>
+                  Streak: {habit.streak}
+                </span>
+                {/* Simpler fire emoji display without container backgrounds */}
+                {habit.streak > 1 && habit.streak < 5 && (
+                  <span title="Building streak">🔥</span>
+                )}
+                {habit.streak >= 5 && habit.streak < 10 && (
+                  <span title="5+ day streak">🔥</span>
+                )}
+                {habit.streak >= 10 && habit.streak < 30 && (
+                  <span title="10+ day streak">🔥🔥</span>
+                )}
+                {habit.streak >= 30 && habit.streak < 100 && (
+                  <span title="30+ day streak">💎</span>
+                )}
+                {habit.streak >= 100 && (
+                  <span title="100+ day streak">👑</span>
+                )}
+              </div>
             </div>
             <div className="flex gap-1">
               {[...Array(7)].map((_, i) => {
