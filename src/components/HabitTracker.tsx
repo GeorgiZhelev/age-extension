@@ -12,7 +12,6 @@ const HabitTracker: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabit, setNewHabit] = useState('');
   const [isAddingHabit, setIsAddingHabit] = useState(false);
-  const [viewMode, setViewMode] = useState<'default' | 'streaks'>('default');
   
   // Load habits from storage when component mounts
   useEffect(() => {
@@ -89,35 +88,23 @@ const HabitTracker: React.FC = () => {
     setHabits(habits.filter(habit => habit.id !== id));
   };
 
-  // Toggle completion status for today
-  const toggleHabitCompletion = (id: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    
+  // Modify toggleHabitCompletion to accept a specific date
+  const toggleHabitCompletion = (id: string, dateStr: string) => {
     setHabits(habits.map(habit => {
       if (habit.id === id) {
-        const isCompleted = habit.completedDates.includes(today);
+        const isCompleted = habit.completedDates.includes(dateStr);
         
         let updatedDates;
-        let updatedStreak;
-        
         if (isCompleted) {
-          // Remove today from completed dates
-          updatedDates = habit.completedDates.filter(date => date !== today);
-          
-          // Recalculate streak
-          updatedStreak = calculateStreak(updatedDates);
+          updatedDates = habit.completedDates.filter(date => date !== dateStr);
         } else {
-          // Add today to completed dates
-          updatedDates = [...habit.completedDates, today];
-          
-          // Calculate new streak
-          updatedStreak = calculateStreak(updatedDates);
+          updatedDates = [...habit.completedDates, dateStr];
         }
         
         return {
           ...habit,
           completedDates: updatedDates,
-          streak: updatedStreak
+          streak: calculateStreak(updatedDates)
         };
       }
       return habit;
@@ -160,124 +147,83 @@ const HabitTracker: React.FC = () => {
     return streak;
   };
 
-  // Is habit completed today?
-  const isCompletedToday = (habit: Habit): boolean => {
-    const today = new Date().toISOString().split('T')[0];
-    return habit.completedDates.includes(today);
+  // Helper to format day name
+  const getDayName = (date: Date): string => {
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
   };
 
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-neutral-200 font-sans">Habits</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setViewMode(viewMode === 'default' ? 'streaks' : 'default')}
-            className="text-xs px-2 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-neutral-300"
-          >
-            {viewMode === 'default' ? 'Show Streaks' : 'Show List'}
-          </button>
-          {!isAddingHabit && (
-            <button
-              onClick={() => setIsAddingHabit(true)}
-              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
-            >
-              Add Habit
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => setIsAddingHabit(true)}
+          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
+        >
+          Add Habit
+        </button>
       </div>
 
-      {viewMode === 'default' ? (
-        // Default view with checkboxes
-        <div className="flex-1 overflow-y-auto">
-          <ul className="space-y-2">
-            {habits.map(habit => (
-              <li key={habit.id} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={isCompletedToday(habit)}
-                    onChange={() => toggleHabitCompletion(habit.id)}
-                    className="h-4 w-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-neutral-300">{habit.name}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-neutral-400 mr-2">
-                    {habit.streak > 0 ? `${habit.streak} day${habit.streak !== 1 ? 's' : ''}` : ''}
-                  </span>
-                  <button 
-                    onClick={() => deleteHabit(habit.id)}
-                    className="text-neutral-500 hover:text-red-500"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        // Streak view with mini chart
-        <div className="flex-1 overflow-y-auto">
-          {habits.map(habit => (
-            <div key={habit.id} className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-neutral-300">{habit.name}</span>
-                  <button 
-                    onClick={() => deleteHabit(habit.id)}
-                    className="text-neutral-500 hover:text-red-500"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-                <span className="text-xs font-medium text-neutral-400">
-                  Streak: {habit.streak}
-                </span>
+      <div className="flex-1 overflow-y-auto">
+        {habits.map(habit => (
+          <div key={habit.id} className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-neutral-300">{habit.name}</span>
+                <button 
+                  onClick={() => deleteHabit(habit.id)}
+                  className="text-neutral-500 hover:text-red-500"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
-              <div className="flex h-8 gap-1">
-                {[...Array(7)].map((_, i) => {
-                  const date = new Date();
-                  date.setDate(date.getDate() - 3 + i); // Center today, 3 days before and 3 after
-                  const dateStr = date.toISOString().split('T')[0];
-                  const isToday = i === 3;
-                  const isPast = i < 3;
-                  const isCompleted = habit.completedDates.includes(dateStr);
-                  
-                  return (
-                    <button 
-                      key={i}
-                      onClick={() => isPast || isToday ? toggleHabitCompletion(habit.id) : null}
-                      disabled={!isPast && !isToday}
-                      className={`
-                        flex-1 rounded-md relative transition-all
-                        ${isToday ? 'ring-2 ring-neutral-600' : ''}
-                        ${isPast || isToday 
-                          ? isCompleted 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : 'bg-red-600 hover:bg-red-700'
-                          : 'bg-neutral-800 cursor-not-allowed opacity-50'
-                        }
-                      `}
-                      title={`${date.toLocaleDateString()} - ${isCompleted ? 'Completed' : 'Not completed'}`}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-300">
-                        {isToday ? 'Today' : date.getDate()}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <span className="text-xs font-medium text-neutral-400">
+                Streak: {habit.streak}
+              </span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="flex gap-1">
+              {[...Array(7)].map((_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - 3 + i); // Center today
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = i === 3;
+                const isPast = i < 3;
+                const isCompleted = habit.completedDates.includes(dateStr);
+                
+                return (
+                  <button 
+                    key={i}
+                    onClick={() => isPast || isToday ? toggleHabitCompletion(habit.id, dateStr) : null}
+                    disabled={!isPast && !isToday}
+                    className={`
+                      flex-1 rounded-md relative transition-all py-2
+                      ${isToday ? 'ring-2 ring-neutral-600' : ''}
+                      ${isPast || isToday 
+                        ? isCompleted 
+                          ? 'bg-green-600 hover:bg-green-700' 
+                          : 'bg-red-600 hover:bg-red-700'
+                        : 'bg-neutral-800 cursor-not-allowed opacity-50'
+                      }
+                    `}
+                    title={`${date.toLocaleDateString()} - ${isCompleted ? 'Completed' : 'Not completed'}`}
+                  >
+                    <div className="flex flex-col items-center justify-center space-y-0.5">
+                      <span className="text-[10px] text-neutral-300 font-medium">
+                        {getDayName(date)}
+                      </span>
+                      <span className="text-[10px] text-neutral-300">
+                        {isToday ? 'Today' : date.getDate()}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {isAddingHabit && (
         <div className="mt-4 flex gap-2">
