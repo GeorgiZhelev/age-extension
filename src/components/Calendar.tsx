@@ -26,9 +26,13 @@ const Calendar: React.FC = () => {
     // Array to hold all calendar days
     const days: Array<Date | null> = [];
     
-    // Add empty slots for days before the first day of the month
+    // Adjust for Monday as first day of week (Monday is 1, Sunday is 0)
+    // Convert Sunday from 0 to 7 for calculations
     const firstDayOfWeek = firstDay.getDay();
-    for (let i = 0; i < firstDayOfWeek; i++) {
+    const mondayAdjustedDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    
+    // Add empty slots for days before the first day of the month
+    for (let i = 0; i < mondayAdjustedDay; i++) {
       days.push(null);
     }
     
@@ -40,7 +44,7 @@ const Calendar: React.FC = () => {
     setCalendarDays(days);
   };
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'

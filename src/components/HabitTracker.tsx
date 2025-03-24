@@ -265,7 +265,7 @@ const HabitTracker: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
             <div key={day} className="text-center text-xs text-neutral-400">
               {day}
             </div>
@@ -273,8 +273,8 @@ const HabitTracker: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-7 gap-1">
-          {/* Add empty cells for proper alignment */}
-          {[...Array(startingDayOfWeek)].map((_, i) => (
+          {/* Adjust for Monday as first day of week */}
+          {[...Array((startingDayOfWeek + 6) % 7)].map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square"></div>
           ))}
           
