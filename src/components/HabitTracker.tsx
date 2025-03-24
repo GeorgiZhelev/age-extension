@@ -6,12 +6,15 @@ interface Habit {
   name: string;
   completedDates: string[]; // Array of ISO date strings
   streak: number;
+  notCompletedDates: string[]; // Add this new field to track explicit "not done" dates
 }
 
 const HabitTracker: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabit, setNewHabit] = useState('');
   const [isAddingHabit, setIsAddingHabit] = useState(false);
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [editingHabitName, setEditingHabitName] = useState('');
   
   // Load habits from storage when component mounts
   useEffect(() => {
@@ -19,15 +22,20 @@ const HabitTracker: React.FC = () => {
       try {
         const storage = await browser.storage.local.get('habits');
         if (storage.habits) {
-          setHabits(storage.habits as Habit[]);
+          // Migrate existing habits to include notCompletedDates if missing
+          const migratedHabits = (storage.habits as Habit[]).map(habit => ({
+            ...habit,
+            notCompletedDates: habit.notCompletedDates || []
+          }));
+          setHabits(migratedHabits);
         }
       } catch (error) {
         console.error('Error loading habits:', error);
         // Demo habits for development
         setHabits([
-          { id: '1', name: 'Meditate', completedDates: generateDemoData(0.8), streak: 3 },
-          { id: '2', name: 'Exercise', completedDates: generateDemoData(0.6), streak: 1 },
-          { id: '3', name: 'Read', completedDates: generateDemoData(0.9), streak: 5 }
+          { id: '1', name: 'Meditate', completedDates: generateDemoData(0.8), streak: 3, notCompletedDates: [] },
+          { id: '2', name: 'Exercise', completedDates: generateDemoData(0.6), streak: 1, notCompletedDates: [] },
+          { id: '3', name: 'Read', completedDates: generateDemoData(0.9), streak: 5, notCompletedDates: [] }
         ]);
       }
     };
@@ -74,6 +82,7 @@ const HabitTracker: React.FC = () => {
         id: Date.now().toString(),
         name: newHabit.trim(),
         completedDates: [],
+        notCompletedDates: [],
         streak: 0
       };
       
@@ -93,18 +102,28 @@ const HabitTracker: React.FC = () => {
     setHabits(habits.map(habit => {
       if (habit.id === id) {
         const isCompleted = habit.completedDates.includes(dateStr);
+        const isNotCompleted = habit.notCompletedDates.includes(dateStr);
         
-        let updatedDates;
-        if (isCompleted) {
-          updatedDates = habit.completedDates.filter(date => date !== dateStr);
+        let updatedCompletedDates = [...habit.completedDates];
+        let updatedNotCompletedDates = [...habit.notCompletedDates];
+        
+        if (!isCompleted && !isNotCompleted) {
+          // Move from unknown to completed
+          updatedCompletedDates.push(dateStr);
+        } else if (isCompleted) {
+          // Move from completed to not completed
+          updatedCompletedDates = updatedCompletedDates.filter(date => date !== dateStr);
+          updatedNotCompletedDates.push(dateStr);
         } else {
-          updatedDates = [...habit.completedDates, dateStr];
+          // Move from not completed back to unknown
+          updatedNotCompletedDates = updatedNotCompletedDates.filter(date => date !== dateStr);
         }
         
         return {
           ...habit,
-          completedDates: updatedDates,
-          streak: calculateStreak(updatedDates)
+          completedDates: updatedCompletedDates,
+          notCompletedDates: updatedNotCompletedDates,
+          streak: calculateStreak(updatedCompletedDates)
         };
       }
       return habit;
@@ -152,6 +171,24 @@ const HabitTracker: React.FC = () => {
     return date.toLocaleDateString('en-US', { weekday: 'short' });
   };
 
+  // Add new function to handle habit name editing
+  const startEditingHabit = (habit: Habit) => {
+    setEditingHabitId(habit.id);
+    setEditingHabitName(habit.name);
+  };
+
+  const saveHabitEdit = () => {
+    if (editingHabitName.trim() !== '') {
+      setHabits(habits.map(habit => 
+        habit.id === editingHabitId 
+          ? { ...habit, name: editingHabitName.trim() }
+          : habit
+      ));
+    }
+    setEditingHabitId(null);
+    setEditingHabitName('');
+  };
+
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -169,7 +206,40 @@ const HabitTracker: React.FC = () => {
           <div key={habit.id} className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-neutral-300">{habit.name}</span>
+                {editingHabitId === habit.id ? (
+                  <input
+                    type="text"
+                    value={editingHabitName}
+                    onChange={(e) => setEditingHabitName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && saveHabitEdit()}
+                    onBlur={saveHabitEdit}
+                    className="bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded text-sm"
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <span className="text-sm font-medium text-neutral-300">{habit.name}</span>
+                    <button 
+                      onClick={() => startEditingHabit(habit)}
+                      className="text-neutral-500 hover:text-blue-500"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        strokeWidth="1.5" 
+                        stroke="currentColor" 
+                        className="h-3 w-3"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" 
+                        />
+                      </svg>
+                    </button>
+                  </>
+                )}
                 <button 
                   onClick={() => deleteHabit(habit.id)}
                   className="text-neutral-500 hover:text-red-500"
@@ -202,19 +272,21 @@ const HabitTracker: React.FC = () => {
                       ${isToday ? 'ring-2 ring-neutral-600' : ''}
                       ${isPast || isToday 
                         ? isCompleted 
-                          ? 'bg-green-600 hover:bg-green-700' 
-                          : 'bg-red-600 hover:bg-red-700'
+                          ? 'bg-green-600 hover:bg-green-700'
+                          : habit.notCompletedDates.includes(dateStr)
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-neutral-700 hover:bg-neutral-600'
                         : 'bg-neutral-800 cursor-not-allowed opacity-50'
                       }
                     `}
-                    title={`${date.toLocaleDateString()} - ${isCompleted ? 'Completed' : 'Not completed'}`}
+                    title={`${date.toLocaleDateString()} - ${isCompleted ? 'Completed' : habit.notCompletedDates.includes(dateStr) ? 'Not completed' : 'Unknown'}`}
                   >
                     <div className="flex flex-col items-center justify-center space-y-0.5">
                       <span className="text-[10px] text-neutral-300 font-medium">
                         {getDayName(date)}
                       </span>
                       <span className="text-[10px] text-neutral-300">
-                        {isToday ? 'Today' : date.getDate()}
+                        {isCompleted ? '✓' : habit.notCompletedDates.includes(dateStr) ? '✗' : '?'}
                       </span>
                     </div>
                   </button>
