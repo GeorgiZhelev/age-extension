@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 
 interface AgeCounterProps {
-  birthDate: string; // ISO date string format
+  birthDate?: string; // Make birthDate optional
 }
 
-const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate }) => {
+const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate: propsBirthDate }) => {
+  const [birthDate, setBirthDate] = useState<string | undefined>(propsBirthDate);
   const [wholeYears, setWholeYears] = useState<number>(0);
   const [decimalPart, setDecimalPart] = useState<string>('');
+  const [inputDate, setInputDate] = useState<string>('');
 
   useEffect(() => {
+    if (!birthDate) return;
+
     const updateAge = () => {
       const birthDateTime = new Date(birthDate).getTime();
       const now = new Date().getTime();
@@ -39,6 +43,40 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate }) => {
     return () => clearInterval(intervalId);
   }, [birthDate]);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputDate) {
+      setBirthDate(inputDate);
+    }
+  };
+
+  if (!birthDate) {
+    return (
+      <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-3xl text-neutral-300 mb-4 font-light">Enter your birth date</div>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="date"
+              className="px-4 py-2 rounded bg-neutral-800 text-neutral-200 mb-4"
+              value={inputDate}
+              onChange={(e) => setInputDate(e.target.value)}
+              required
+            />
+            <div>
+              <button 
+                type="submit" 
+                className="px-4 py-2 bg-neutral-700 text-neutral-200 rounded hover:bg-neutral-600"
+              >
+                Calculate Age
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex items-center justify-center">
       <div className="text-center">
@@ -48,6 +86,12 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate }) => {
           <span className="text-7xl text-neutral-300 leading-none font-mono">{decimalPart.substring(0, 6)}</span>
           <span className="text-3xl text-neutral-300 leading-none font-mono">{decimalPart.substring(6)}</span>
         </div>
+        <button 
+          onClick={() => setBirthDate(undefined)} 
+          className="mt-4 px-3 py-1 text-sm bg-neutral-800 text-neutral-400 rounded hover:bg-neutral-700"
+        >
+          Reset
+        </button>
       </div>
     </div>
   );
