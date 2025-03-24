@@ -250,12 +250,12 @@ const HabitTracker: React.FC = () => {
     return (
       <div className="mt-4 overflow-y-auto pb-4">
         {/* Centered title */}
-        <h3 className="text-sm font-medium text-neutral-300 mb-4 text-center">
+        <h3 className="text-sm font-medium text-neutral-300 mb-3 text-center">
           All Habits - Past 30 Days
         </h3>
         
         {/* Color legend as a horizontal list */}
-        <div className="flex flex-wrap gap-3 justify-center mb-4">
+        <div className="flex flex-wrap gap-2 justify-center mb-3">
           {habits.map((habit) => (
             <div key={habit.id} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded-full ${getHabitColor(habit.id)}`}></div>
@@ -264,7 +264,7 @@ const HabitTracker: React.FC = () => {
           ))}
         </div>
         
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 gap-0.75 mb-1.5">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
             <div key={day} className="text-center text-xs text-neutral-400">
               {day}
@@ -272,10 +272,11 @@ const HabitTracker: React.FC = () => {
           ))}
         </div>
         
-        <div className="grid grid-cols-7 gap-1">
+        {/* Add px-1 to fix the border clipping issue */}
+        <div className="grid grid-cols-7 gap-0.75 px-1">
           {/* Adjust for Monday as first day of week */}
           {[...Array((startingDayOfWeek + 6) % 7)].map((_, i) => (
-            <div key={`empty-${i}`} className="aspect-square"></div>
+            <div key={`empty-${i}`} className="h-8"></div>
           ))}
           
           {past30Days.map((dateStr) => {
@@ -289,16 +290,16 @@ const HabitTracker: React.FC = () => {
               <div
                 key={dateStr}
                 className={`
-                  aspect-square p-0.5 bg-neutral-800 rounded flex flex-col
-                  ${isToday ? 'ring-2 ring-blue-400' : ''}
+                  h-8 p-1 bg-neutral-800 rounded flex flex-col
+                  ${isToday ? 'ring-1 ring-blue-400' : ''}
                 `}
                 title={date.toLocaleDateString()}
               >
-                <div className="text-[9px] text-neutral-400 mb-0.5 text-center">
+                <div className="text-[9px] text-neutral-400 leading-tight text-center">
                   {date.getDate()}
                 </div>
                 
-                <div className="flex flex-wrap gap-0.5 justify-center items-center">
+                <div className="flex flex-wrap gap-0.75 justify-center items-center mt-0.5">
                   {habits.map((habit) => {
                     const isCompleted = habit.completedDates.includes(dateStr);
                     
