@@ -4,6 +4,7 @@ import Calendar from './components/Calendar'
 import TodoList from './components/TodoList'
 import MostVisited from './components/MostVisited'
 import TimeProgress from './components/TimeProgress'
+import HabitTracker from './components/HabitTracker'
 import './App.css'
 
 function App() {
@@ -36,6 +37,11 @@ function App() {
         {/* Time Progress (20% width) */}
         <div className="col-span-3 col-start-7">
           <TimeProgress />
+        </div>
+
+        {/* Habit Tracker */}
+        <div className="col-span-3 col-start-10">
+          <HabitTracker />
         </div>
       </div>
     </div>
