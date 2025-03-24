@@ -8,23 +8,27 @@ import CalendarView from './CalendarView';
 import CumulativeView from './CumulativeView';
 import AddHabitForm from './AddHabitForm';
 
+// Update the storage type to include a timestamp
+interface HabitState {
+  habits: Habit[];  // Using your existing Habit type
+  lastUpdated: number;
+}
+
 const HabitTracker: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isAddingHabit, setIsAddingHabit] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('regular');
+  const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
   
   // Load habits from storage when component mounts
   useEffect(() => {
     const loadHabits = async () => {
       try {
-        const storage = await browser.storage.local.get('habits');
-        if (storage.habits) {
-          // Migrate existing habits to include notCompletedDates if missing
-          const migratedHabits = (storage.habits as Habit[]).map(habit => ({
-            ...habit,
-            notCompletedDates: habit.notCompletedDates || []
-          }));
-          setHabits(migratedHabits);
+        const storage = await browser.storage.local.get('habitState');
+        if (storage.habitState) {
+          const habitState = storage.habitState as HabitState;
+          setHabits(habitState.habits);
+          setLastUpdated(habitState.lastUpdated);
         }
       } catch (error) {
         console.error('Error loading habits:', error);
@@ -40,11 +44,47 @@ const HabitTracker: React.FC = () => {
     loadHabits();
   }, []);
 
+  // Set up sync interval to check for updates from other tabs
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const storage = await browser.storage.local.get('habitState');
+        if (storage.habitState) {
+          const storedState = storage.habitState as HabitState;
+          
+          // Only update if storage has newer data than our current state
+          if (storedState.lastUpdated > lastUpdated) {
+            setHabits(storedState.habits);
+            setLastUpdated(storedState.lastUpdated);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for habit updates:', error);
+      }
+    };
+
+    // Check for updates every second
+    const intervalId = setInterval(checkForUpdates, 1000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [lastUpdated]);
+
   // Save habits to storage whenever they change
   useEffect(() => {
     const saveHabits = async () => {
       try {
-        await browser.storage.local.set({ habits });
+        // Create a timestamp when saving
+        const currentTime = Date.now();
+        setLastUpdated(currentTime);
+        
+        // Save both habits and timestamp
+        await browser.storage.local.set({ 
+          habitState: {
+            habits,
+            lastUpdated: currentTime
+          }
+        });
       } catch (error) {
         console.error('Error saving habits:', error);
       }

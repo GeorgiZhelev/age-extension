@@ -7,17 +7,26 @@ interface Todo {
   completed: boolean;
 }
 
+// Add a new interface for storage with timestamp
+interface TodoState {
+  todos: Todo[];
+  lastUpdated: number;
+}
+
 const TodoList: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
 
   // Load todos from storage when component mounts
   useEffect(() => {
     const loadTodos = async () => {
       try {
-        const storage = await browser.storage.local.get('todos');
-        if (storage.todos) {
-          setTodos(storage.todos as Todo[]);
+        const storage = await browser.storage.local.get('todoState');
+        if (storage.todoState) {
+          const todoState = storage.todoState as TodoState;
+          setTodos(todoState.todos);
+          setLastUpdated(todoState.lastUpdated);
         }
       } catch (error) {
         console.error('Error loading todos:', error);
@@ -34,11 +43,47 @@ const TodoList: React.FC = () => {
     loadTodos();
   }, []);
 
+  // Set up sync interval to check for updates from other tabs
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const storage = await browser.storage.local.get('todoState');
+        if (storage.todoState) {
+          const storedState = storage.todoState as TodoState;
+          
+          // Only update if storage has newer data than our current state
+          if (storedState.lastUpdated > lastUpdated) {
+            setTodos(storedState.todos);
+            setLastUpdated(storedState.lastUpdated);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for updates:', error);
+      }
+    };
+
+    // Check for updates every second
+    const intervalId = setInterval(checkForUpdates, 1000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [lastUpdated]);
+
   // Save todos to storage whenever they change
   useEffect(() => {
     const saveTodos = async () => {
       try {
-        await browser.storage.local.set({ todos });
+        // Create a timestamp when saving
+        const currentTime = Date.now();
+        setLastUpdated(currentTime);
+        
+        // Save both todos and timestamp
+        await browser.storage.local.set({ 
+          todoState: {
+            todos,
+            lastUpdated: currentTime
+          }
+        });
       } catch (error) {
         console.error('Error saving todos:', error);
       }
