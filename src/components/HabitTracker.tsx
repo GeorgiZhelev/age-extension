@@ -15,6 +15,8 @@ const HabitTracker: React.FC = () => {
   const [isAddingHabit, setIsAddingHabit] = useState(false);
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [editingHabitName, setEditingHabitName] = useState('');
+  const [viewMode, setViewMode] = useState<'regular' | 'calendar' | 'cumulative'>('regular');
+  const [selectedHabitForChart, setSelectedHabitForChart] = useState<string | null>(null);
   
   // Load habits from storage when component mounts
   useEffect(() => {
@@ -189,20 +191,227 @@ const HabitTracker: React.FC = () => {
     setEditingHabitName('');
   };
 
+  // Generate dates for the past 30 days
+  const generatePast30Days = () => {
+    const dates: string[] = [];
+    const today = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    return dates;
+  };
+
+  // Calculate cumulative completions for a habit
+  const calculateCumulativeCompletions = (habitId: string) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return [];
+    
+    const past30Days = generatePast30Days();
+    let cumulative = 0;
+    
+    return past30Days.map(date => {
+      if (habit.completedDates.includes(date)) {
+        cumulative += 1;
+      }
+      return { date, cumulative };
+    });
+  };
+
+  // Generate a consistent color for each habit
+  const getHabitColor = (habitId: string) => {
+    // Generate a predictable color based on the habit ID
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500',
+      'bg-red-500', 'bg-orange-500', 'bg-teal-500'
+    ];
+    
+    // Use a simple hash function to get a consistent index
+    const hashCode = habitId.split('').reduce(
+      (acc, char) => acc + char.charCodeAt(0), 0
+    );
+    
+    return colors[hashCode % colors.length];
+  };
+
+  // Render a combined calendar view for all habits
+  const renderCombinedCalendarView = () => {
+    const past30Days = generatePast30Days();
+    const firstDay = new Date(past30Days[0]);
+    const startingDayOfWeek = firstDay.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    
+    return (
+      <div className="mt-4 overflow-y-auto pb-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-medium text-neutral-300">All Habits - Past 30 Days</h3>
+          
+          {/* Color legend */}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {habits.map(habit => (
+              <div key={habit.id} className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${getHabitColor(habit.id)}`}></div>
+                <span className="text-xs text-neutral-400 truncate max-w-24">{habit.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center text-xs text-neutral-400">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1">
+          {/* Add empty cells for proper alignment */}
+          {[...Array(startingDayOfWeek)].map((_, i) => (
+            <div key={`empty-${i}`} className="aspect-square"></div>
+          ))}
+          
+          {past30Days.map((dateStr) => {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const isToday = date.getDate() === today.getDate() && 
+                            date.getMonth() === today.getMonth() && 
+                            date.getFullYear() === today.getFullYear();
+            
+            return (
+              <div
+                key={dateStr}
+                className={`
+                  aspect-square p-0.5 bg-neutral-800 rounded flex flex-col
+                  ${isToday ? 'ring-2 ring-blue-400' : ''}
+                `}
+                title={date.toLocaleDateString()}
+              >
+                <div className="text-[9px] text-neutral-400 mb-0.5 text-center">
+                  {date.getDate()}
+                </div>
+                
+                <div className="flex flex-wrap gap-0.5 justify-center items-center">
+                  {habits.map(habit => {
+                    const isCompleted = habit.completedDates.includes(dateStr);
+                    const isNotCompleted = habit.notCompletedDates.includes(dateStr);
+                    
+                    if (!isCompleted && !isNotCompleted) return null;
+                    
+                    return (
+                      <button
+                        key={habit.id}
+                        onClick={() => toggleHabitCompletion(habit.id, dateStr)}
+                        className={`
+                          w-1.5 h-1.5 rounded-full
+                          ${isCompleted ? getHabitColor(habit.id) : 'bg-red-500'}
+                        `}
+                        title={`${habit.name}: ${isCompleted ? 'Completed' : 'Not completed'}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Render the cumulative chart for a habit
+  const renderCumulativeChart = (habit: Habit) => {
+    const cumulativeData = calculateCumulativeCompletions(habit.id);
+    const maxCumulative = cumulativeData.length > 0 ? cumulativeData[cumulativeData.length - 1].cumulative : 0;
+    
+    return (
+      <div className="mt-4">
+        <h3 className="text-sm font-medium text-neutral-300 mb-2">{habit.name} - Cumulative Completions</h3>
+        <div className="h-40 relative border border-neutral-700 bg-neutral-800 rounded p-2">
+          {/* Simple line chart */}
+          <div className="w-full h-full flex items-end">
+            {cumulativeData.map((data, i) => {
+              const height = maxCumulative > 0 ? (data.cumulative / maxCumulative * 100) : 0;
+              return (
+                <div 
+                  key={i} 
+                  className="flex-1 flex flex-col items-center"
+                  title={`${data.date}: ${data.cumulative} completions`}
+                >
+                  <div 
+                    className="w-0.5 bg-blue-500"
+                    style={{ height: `${height}%` }}
+                  ></div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Y-axis label */}
+          <div className="absolute top-0 left-0 text-[10px] text-neutral-400">
+            {maxCumulative}
+          </div>
+          
+          {/* X-axis labels (start, middle, end dates) */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-between text-[8px] text-neutral-400 mt-1">
+            <span>{cumulativeData[0]?.date.slice(5)}</span>
+            <span>{cumulativeData[Math.floor(cumulativeData.length / 2)]?.date.slice(5)}</span>
+            <span>{cumulativeData[cumulativeData.length - 1]?.date.slice(5)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-neutral-200 font-sans">Habits</h2>
-        <button
-          onClick={() => setIsAddingHabit(true)}
-          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
-        >
-          Add Habit
-        </button>
+        <div className="flex gap-2">
+          {/* View mode buttons with icons */}
+          <div className="flex rounded-md overflow-hidden">
+            <button
+              onClick={() => setViewMode('regular')}
+              className={`p-1.5 ${viewMode === 'regular' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Habits View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`p-1.5 ${viewMode === 'calendar' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Calendar View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('cumulative')}
+              className={`p-1.5 ${viewMode === 'cumulative' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Chart View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+              </svg>
+            </button>
+          </div>
+          <button
+            onClick={() => setIsAddingHabit(true)}
+            className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
+          >
+            Add Habit
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {habits.map(habit => (
+        {viewMode === 'regular' && habits.map(habit => (
           <div key={habit.id} className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
@@ -295,6 +504,31 @@ const HabitTracker: React.FC = () => {
             </div>
           </div>
         ))}
+
+        {viewMode === 'calendar' && (
+          <div className="overflow-y-auto">
+            {renderCombinedCalendarView()}
+          </div>
+        )}
+
+        {viewMode === 'cumulative' && (
+          <>
+            <div className="mb-4">
+              <select
+                className="w-full bg-neutral-800 text-neutral-300 rounded px-2 py-1 border border-neutral-700"
+                value={selectedHabitForChart || ''}
+                onChange={(e) => setSelectedHabitForChart(e.target.value)}
+              >
+                <option value="">Select a habit</option>
+                {habits.map(habit => (
+                  <option key={habit.id} value={habit.id}>{habit.name}</option>
+                ))}
+              </select>
+            </div>
+            {selectedHabitForChart && habits.find(h => h.id === selectedHabitForChart) && 
+              renderCumulativeChart(habits.find(h => h.id === selectedHabitForChart)!)}
+          </>
+        )}
       </div>
 
       {isAddingHabit && (
