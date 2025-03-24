@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import browser from 'webextension-polyfill';
 
 interface AgeCounterProps {
   birthDate?: string; // Make birthDate optional
@@ -10,8 +11,38 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate: propsBirthDate }) =>
   const [decimalPart, setDecimalPart] = useState<string>('');
   const [inputDate, setInputDate] = useState<string>('');
 
+  // Load birthdate from storage on component mount
+  useEffect(() => {
+    const loadBirthdate = async () => {
+      try {
+        const result = await browser.storage.local.get('birthdate');
+        if (result.birthdate) {
+          setBirthDate(result.birthdate as string);
+        }
+      } catch (error) {
+        console.error('Error loading birthdate from storage:', error);
+      }
+    };
+    
+    // Only load from storage if no birthdate was provided via props
+    if (!propsBirthDate) {
+      loadBirthdate();
+    }
+  }, [propsBirthDate]);
+
   useEffect(() => {
     if (!birthDate) return;
+
+    // Save to storage whenever birthDate changes (and is not undefined)
+    const saveBirthdate = async () => {
+      try {
+        await browser.storage.local.set({ birthdate: birthDate });
+      } catch (error) {
+        console.error('Error saving birthdate to storage:', error);
+      }
+    };
+    
+    saveBirthdate();
 
     const updateAge = () => {
       const birthDateTime = new Date(birthDate).getTime();
@@ -47,6 +78,16 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate: propsBirthDate }) =>
     e.preventDefault();
     if (inputDate) {
       setBirthDate(inputDate);
+    }
+  };
+
+  const handleReset = async () => {
+    setBirthDate(undefined);
+    // Also clear from storage
+    try {
+      await browser.storage.local.remove('birthdate');
+    } catch (error) {
+      console.error('Error removing birthdate from storage:', error);
     }
   };
 
@@ -87,7 +128,7 @@ const AgeCounter: React.FC<AgeCounterProps> = ({ birthDate: propsBirthDate }) =>
           <span className="text-3xl text-neutral-300 leading-none font-mono">{decimalPart.substring(6)}</span>
         </div>
         <button 
-          onClick={() => setBirthDate(undefined)} 
+          onClick={handleReset} 
           className="mt-4 px-3 py-1 text-sm bg-neutral-800 text-neutral-400 rounded hover:bg-neutral-700"
         >
           Reset
