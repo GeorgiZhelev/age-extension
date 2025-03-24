@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import sharp from 'sharp';
 
 // Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -25,14 +26,22 @@ const generateSVGIcon = (size) => {
 // Write each icon size
 const sizes = [48, 96];
 sizes.forEach(size => {
-  const iconPath = path.join(iconsDir, `icon-${size}.svg`);
-  // For now, we'll write SVG files as placeholders
-  // In a real app, you'd use a library like sharp to convert SVGs to PNGs
-  fs.writeFileSync(
-    iconPath, 
-    generateSVGIcon(size)
-  );
-  console.log(`Generated icon: ${iconPath}`);
+  // Create SVG buffer from the string
+  const svgBuffer = Buffer.from(generateSVGIcon(size));
+  
+  // Define output path for PNG
+  const iconPath = path.join(iconsDir, `icon-${size}.png`);
+  
+  // Convert SVG to PNG and save
+  sharp(svgBuffer)
+    .png()
+    .toFile(iconPath)
+    .then(() => {
+      console.log(`Generated icon: ${iconPath}`);
+    })
+    .catch(err => {
+      console.error(`Error generating ${iconPath}:`, err);
+    });
 });
 
 console.log('Icon generation complete'); 
