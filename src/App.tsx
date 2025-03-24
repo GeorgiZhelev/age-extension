@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import AgeCounter from './components/AgeCounter'
 import Calendar from './components/Calendar'
 import TodoList from './components/TodoList'
