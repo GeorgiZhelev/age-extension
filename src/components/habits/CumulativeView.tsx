@@ -78,7 +78,21 @@ const CumulativeView: React.FC<CumulativeViewProps> = ({
             legendPosition: 'middle',
             truncateTickAt: 0,
           }}
-          colors={{ scheme: 'category10' }}
+          colors={d => {
+            const habit = habits.find(h => h.name === d.id);
+            if (!habit) return '#000000';
+            
+            // Map Tailwind color classes to actual hex colors
+            const colorMap: Record<string, string> = {
+              'green': '#10b981', // or whatever shade matches your Tailwind green
+              'pink': '#ec4899',  // or whatever shade matches your Tailwind pink
+              'blue': '#3b82f6',  // or whatever shade matches your Tailwind blue
+              // Add other colors as needed
+            };
+            
+            const colorName = getHabitColor(habit.id).replace('bg-', '').split('-')[0];
+            return colorMap[colorName] || '#cccccc'; // fallback color
+          }}
           pointSize={8}
           // Make points solid by setting the color the same as the border
           pointColor={{ from: 'serieColor' }}
