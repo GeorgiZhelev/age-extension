@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@nivo/line": "^0.88.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "webextension-polyfill": "^0.12.0"

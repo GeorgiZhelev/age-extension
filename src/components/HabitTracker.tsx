@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import browser from 'webextension-polyfill';
+import { ResponsiveLine } from '@nivo/line';
 
 interface Habit {
   id: string;
@@ -16,7 +17,6 @@ const HabitTracker: React.FC = () => {
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [editingHabitName, setEditingHabitName] = useState('');
   const [viewMode, setViewMode] = useState<'regular' | 'calendar' | 'cumulative'>('regular');
-  const [selectedHabitForChart, setSelectedHabitForChart] = useState<string | null>(null);
   
   // Load habits from storage when component mounts
   useEffect(() => {
@@ -325,48 +325,175 @@ const HabitTracker: React.FC = () => {
     );
   };
 
-  // Render the cumulative chart for a habit
-  const renderCumulativeChart = (habit: Habit) => {
-    const habitColor = getHabitColor(habit.id).replace('bg-', 'bg-');
-    const cumulativeData = calculateCumulativeCompletions(habit.id);
-    const maxCumulative = cumulativeData.length > 0 ? cumulativeData[cumulativeData.length - 1].cumulative : 0;
+  // Update the cumulative chart rendering to use Nivo and show all habits
+  const renderCumulativeCharts = () => {
+    
+    // Prepare data for Nivo chart - one line per habit
+    const chartData = habits.map(habit => {
+      const cumulativeData = calculateCumulativeCompletions(habit.id);
+      
+      return {
+        id: habit.name,
+        color: getHabitColor(habit.id).replace('bg-', '').split('-')[0],
+        data: cumulativeData.map(d => ({
+          x: d.date,
+          y: d.cumulative
+        }))
+      };
+    });
     
     return (
       <div className="mt-4">
-        <h3 className="text-sm font-medium text-neutral-300 mb-2">{habit.name} - Cumulative Completions</h3>
-        <div className="h-40 relative border border-neutral-700 bg-neutral-800 rounded p-2">
-          {/* Simple line chart */}
-          <div className="w-full h-full flex items-end">
-            {cumulativeData.map((data, i) => {
-              const height = maxCumulative > 0 ? (data.cumulative / maxCumulative * 100) : 0;
+        <h3 className="text-sm font-medium text-neutral-300 mb-4 text-center">
+          All Habits - Cumulative Completions
+        </h3>
+        
+        {/* Color legend as a horizontal list - similar to calendar view */}
+        <div className="flex flex-wrap gap-3 justify-center mb-4">
+          {habits.map((habit) => (
+            <div key={habit.id} className="flex items-center gap-1.5">
+              <div className={`w-3 h-3 rounded-full ${getHabitColor(habit.id)}`}></div>
+              <span className="text-xs text-neutral-300">{habit.name}</span>
+            </div>
+          ))}
+        </div>
+        
+        <div className="h-64 bg-neutral-800 rounded border border-neutral-700 p-2">
+          <ResponsiveLine
+            data={chartData}
+            margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
+            xScale={{ type: 'point' }}
+            yScale={{
+              type: 'linear',
+              min: 0,
+              max: 'auto',
+              stacked: false,
+            }}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: -45,
+              format: (value) => value.slice(5), // Show only MM-DD part
+              legend: 'Date',
+              legendOffset: 40,
+              legendPosition: 'middle',
+              // Show fewer ticks on x-axis to avoid cluttering
+              tickValues: chartData[0]?.data.map((d, i) => i % 3 === 0 ? d.x : '').filter(Boolean)
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'Completions',
+              legendOffset: -40,
+              legendPosition: 'middle',
+              truncateTickAt: 0,
+            }}
+            colors={{ scheme: 'category10' }}
+            pointSize={8}
+            // Make points solid by setting the color the same as the border
+            pointColor={{ from: 'serieColor' }}
+            pointBorderWidth={1}
+            pointBorderColor={{ from: 'serieColor' }}
+            pointLabelYOffset={-12}
+            enableSlices="x"
+            useMesh={true}
+            enableCrosshair={true}
+            tooltip={(props) => {
+              // Make sure we have point data to display
+              if (!props.point) return null;
+              
+              // Log for debugging
+              console.log("Tooltip data:", props.point.data.x);
+              
+              // More robust date parsing
+              const dateStr = String(props.point.data.x);
+              let formattedDate;
+              
+              try {
+                // ISO date format like "2023-04-12"
+                const [year, month, day] = dateStr.split('-').map(num => parseInt(num));
+                const date = new Date(year, month - 1, day);
+                
+                if (isNaN(date.getTime())) {
+                  // Fallback if date is invalid
+                  formattedDate = dateStr;
+                } else {
+                  formattedDate = `${getDayName(date)}, ${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+                }
+              } catch (e) {
+                // If any parsing errors, just show the raw string
+                formattedDate = dateStr;
+              }
+              
               return (
-                <div 
-                  key={i} 
-                  className="flex-1 flex flex-col items-center"
-                  title={`${data.date}: ${data.cumulative} completions`}
+                <div
+                  style={{
+                    background: '#212121',
+                    padding: '9px 12px',
+                    border: '1px solid #444',
+                    borderRadius: '4px',
+                  }}
                 >
-                  <div 
-                    className={`
-                      w-0.5 h-full ${habitColor}
-                    `}
-                    style={{ height: `${height}%` }}
-                  ></div>
+                  <div style={{ marginBottom: '5px', fontSize: '14px', color: '#f0f0f0' }}>
+                    {formattedDate}
+                  </div>
+                  <div
+                    style={{
+                      padding: '3px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        background: props.point.serieColor,
+                        borderRadius: '50%'
+                      }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#f0f0f0' }}>
+                      {props.point.serieId}: {String(props.point.data.y)} completions
+                    </span>
+                  </div>
                 </div>
               );
-            })}
-          </div>
-          
-          {/* Y-axis label */}
-          <div className="absolute top-0 left-0 text-[10px] text-neutral-400">
-            {maxCumulative}
-          </div>
-          
-          {/* X-axis labels (start, middle, end dates) */}
-          <div className="absolute bottom-0 left-0 right-0 flex justify-between text-[8px] text-neutral-400 mt-1">
-            <span>{cumulativeData[0]?.date.slice(5)}</span>
-            <span>{cumulativeData[Math.floor(cumulativeData.length / 2)]?.date.slice(5)}</span>
-            <span>{cumulativeData[cumulativeData.length - 1]?.date.slice(5)}</span>
-          </div>
+            }}
+            legends={[]}
+            theme={{
+              axis: {
+                ticks: {
+                  text: {
+                    fill: '#a3a3a3',
+                    fontSize: 10
+                  }
+                },
+                legend: {
+                  text: {
+                    fill: '#a3a3a3',
+                    fontSize: 12
+                  }
+                }
+              },
+              grid: {
+                line: {
+                  stroke: '#404040',
+                  strokeWidth: 1
+                }
+              },
+              tooltip: {
+                container: {
+                  background: '#212121',
+                  color: '#f0f0f0',
+                  fontSize: '12px',
+                  borderRadius: '4px',
+                  boxShadow: '0 3px 8px rgba(0, 0, 0, 0.5)'
+                }
+              }
+            }}
+          />
         </div>
       </div>
     );
@@ -518,22 +645,9 @@ const HabitTracker: React.FC = () => {
         )}
 
         {viewMode === 'cumulative' && (
-          <>
-            <div className="mb-4">
-              <select
-                className="w-full bg-neutral-800 text-neutral-300 rounded px-2 py-1 border border-neutral-700"
-                value={selectedHabitForChart || ''}
-                onChange={(e) => setSelectedHabitForChart(e.target.value)}
-              >
-                <option value="">Select a habit</option>
-                {habits.map(habit => (
-                  <option key={habit.id} value={habit.id}>{habit.name}</option>
-                ))}
-              </select>
-            </div>
-            {selectedHabitForChart && habits.find(h => h.id === selectedHabitForChart) && 
-              renderCumulativeChart(habits.find(h => h.id === selectedHabitForChart)!)}
-          </>
+          <div className="overflow-y-auto">
+            {renderCumulativeCharts()}
+          </div>
         )}
       </div>
 
