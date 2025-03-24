@@ -8,7 +8,7 @@ A browser extension that replaces your new tab page with a customized dashboard 
 - **Most Visited Sites**: Quick access to your most frequently visited websites
 - **Habit Tracker**: Track and visualize your daily habits
 
-> **Note**: This extension works completely offline, with the only external network requests being to DuckDuckGo for website favicons. I've only tested on Firefox, but it should work on Chrome too. Should ™️
+> **Note**: This extension works completely offline, with the only external network requests being to DuckDuckGo for website favicons. I've only tested on Firefox and Chrome, but it should work on other Chromium based browsers too. Should ™️
 
 ## Features
 
@@ -24,7 +24,7 @@ This project uses:
 - React with TypeScript
 - Vite for build tooling
 - Tailwind CSS for styling
-- WebExtension API (compatible with Chrome and Firefox)
+- WebExtension API 
 
 ### Setup
 
