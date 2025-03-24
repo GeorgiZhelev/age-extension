@@ -1,0 +1,207 @@
+import { useState, useEffect } from 'react';
+import browser from 'webextension-polyfill';
+import { Habit, ViewMode } from './types';
+import { calculateStreak, generateDemoData } from './utils';
+import { getHabitColor } from './styles';
+import HabitListItem from './HabitListItem';
+import CalendarView from './CalendarView';
+import CumulativeView from './CumulativeView';
+import AddHabitForm from './AddHabitForm';
+
+const HabitTracker: React.FC = () => {
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [isAddingHabit, setIsAddingHabit] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('regular');
+  
+  // Load habits from storage when component mounts
+  useEffect(() => {
+    const loadHabits = async () => {
+      try {
+        const storage = await browser.storage.local.get('habits');
+        if (storage.habits) {
+          // Migrate existing habits to include notCompletedDates if missing
+          const migratedHabits = (storage.habits as Habit[]).map(habit => ({
+            ...habit,
+            notCompletedDates: habit.notCompletedDates || []
+          }));
+          setHabits(migratedHabits);
+        }
+      } catch (error) {
+        console.error('Error loading habits:', error);
+        // Demo habits for development
+        setHabits([
+          { id: '1', name: 'Meditate', completedDates: generateDemoData(0.8), streak: 3, notCompletedDates: [] },
+          { id: '2', name: 'Exercise', completedDates: generateDemoData(0.6), streak: 1, notCompletedDates: [] },
+          { id: '3', name: 'Read', completedDates: generateDemoData(0.9), streak: 5, notCompletedDates: [] }
+        ]);
+      }
+    };
+    
+    loadHabits();
+  }, []);
+
+  // Save habits to storage whenever they change
+  useEffect(() => {
+    const saveHabits = async () => {
+      try {
+        await browser.storage.local.set({ habits });
+      } catch (error) {
+        console.error('Error saving habits:', error);
+      }
+    };
+    
+    if (habits.length > 0) {
+      saveHabits();
+    }
+  }, [habits]);
+
+  // Add a new habit
+  const addHabit = (habitName: string) => {
+    if (habitName.trim() !== '') {
+      const newHabitItem: Habit = {
+        id: Date.now().toString(),
+        name: habitName.trim(),
+        completedDates: [],
+        notCompletedDates: [],
+        streak: 0
+      };
+      
+      setHabits([...habits, newHabitItem]);
+      setIsAddingHabit(false);
+    }
+  };
+
+  // Delete a habit
+  const deleteHabit = (id: string) => {
+    setHabits(habits.filter(habit => habit.id !== id));
+  };
+
+  // Toggle habit completion for a specific date
+  const toggleHabitCompletion = (id: string, dateStr: string) => {
+    setHabits(habits.map(habit => {
+      if (habit.id === id) {
+        const isCompleted = habit.completedDates.includes(dateStr);
+        const isNotCompleted = habit.notCompletedDates.includes(dateStr);
+        
+        let updatedCompletedDates = [...habit.completedDates];
+        let updatedNotCompletedDates = [...habit.notCompletedDates];
+        
+        if (!isCompleted && !isNotCompleted) {
+          // Move from unknown to completed
+          updatedCompletedDates.push(dateStr);
+        } else if (isCompleted) {
+          // Move from completed to not completed
+          updatedCompletedDates = updatedCompletedDates.filter(date => date !== dateStr);
+          updatedNotCompletedDates.push(dateStr);
+        } else {
+          // Move from not completed back to unknown
+          updatedNotCompletedDates = updatedNotCompletedDates.filter(date => date !== dateStr);
+        }
+        
+        return {
+          ...habit,
+          completedDates: updatedCompletedDates,
+          notCompletedDates: updatedNotCompletedDates,
+          streak: calculateStreak(updatedCompletedDates)
+        };
+      }
+      return habit;
+    }));
+  };
+
+  // Edit a habit name
+  const editHabit = (habit: Habit, newName: string) => {
+    setHabits(habits.map(h => 
+      h.id === habit.id 
+        ? { ...h, name: newName }
+        : h
+    ));
+  };
+
+  // Helper function to get color for a habit
+  const getHabitColorWrapper = (habitId: string): string => {
+    return getHabitColor(habits, habitId);
+  };
+
+  return (
+    <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-neutral-200 font-sans">Habits</h2>
+        <div className="flex gap-2">
+          {/* View mode buttons with icons */}
+          <div className="flex rounded-md overflow-hidden">
+            <button
+              onClick={() => setViewMode('regular')}
+              className={`p-1.5 ${viewMode === 'regular' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Habits View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`p-1.5 ${viewMode === 'calendar' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Calendar View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('cumulative')}
+              className={`p-1.5 ${viewMode === 'cumulative' ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-400'}`}
+              title="Chart View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+              </svg>
+            </button>
+          </div>
+          <button
+            onClick={() => setIsAddingHabit(true)}
+            className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
+          >
+            Add Habit
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {viewMode === 'regular' && habits.map(habit => (
+          <HabitListItem
+            key={habit.id}
+            habit={habit}
+            onToggleCompletion={toggleHabitCompletion}
+            onEdit={editHabit}
+            onDelete={deleteHabit}
+          />
+        ))}
+
+        {viewMode === 'calendar' && (
+          <CalendarView
+            habits={habits}
+            getHabitColor={getHabitColorWrapper}
+            onToggleCompletion={toggleHabitCompletion}
+          />
+        )}
+
+        {viewMode === 'cumulative' && (
+          <CumulativeView
+            habits={habits}
+            getHabitColor={getHabitColorWrapper}
+          />
+        )}
+      </div>
+
+      {isAddingHabit && (
+        <AddHabitForm
+          onAdd={addHabit}
+          onCancel={() => setIsAddingHabit(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default HabitTracker; 
