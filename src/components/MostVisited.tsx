@@ -10,6 +10,7 @@ interface TopSite {
 const MostVisited: React.FC = () => {
   const [topSites, setTopSites] = useState<TopSite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [forceFallbackForTesting, setForceFallbackForTesting] = useState(false);
 
   useEffect(() => {
     const loadTopSites = async () => {
@@ -23,7 +24,7 @@ const MostVisited: React.FC = () => {
           return {
             url: site.url,
             title: site.title || url.hostname,
-            favicon: `${url.origin}/favicon.ico` // Direct path to favicon
+            favicon: `${url.origin}/favicon.ico`
           };
         });
         
@@ -81,6 +82,16 @@ const MostVisited: React.FC = () => {
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full">
       <h2 className="text-xl font-semibold text-neutral-200 mb-4 font-sans">Most Visited</h2>
       
+      {/* Add a small hidden button for testing */}
+      <div className="absolute top-2 right-2">
+        <button 
+          onClick={() => setForceFallbackForTesting(!forceFallbackForTesting)}
+          className="text-xs text-neutral-600 hover:text-neutral-400"
+        >
+          Toggle Fallbacks
+        </button>
+      </div>
+      
       {isLoading ? (
         <div className="flex justify-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -96,17 +107,25 @@ const MostVisited: React.FC = () => {
                   className="flex flex-col items-center group"
                 >
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                    site.favicon ? 'bg-neutral-800' : getColorFromURL(site.url)
+                    site.favicon && !forceFallbackForTesting ? 'bg-neutral-800' : getColorFromURL(site.url)
                   }`}>
-                    {site.favicon ? (
+                    {site.favicon && !forceFallbackForTesting ? (
                       <img 
                         src={site.favicon} 
                         alt="" 
                         className="w-8 h-8" 
                         onError={(e) => {
-                          // Fallback to Google's service if direct favicon fails
+                          // Log the failed favicon URL
+                          console.log(`Failed to load favicon from: ${site.favicon}`);
+                          
                           const target = e.target as HTMLImageElement;
-                          target.src = `https://www.google.com/s2/favicons?domain=${new URL(site.url).hostname}&sz=64`;
+                          const url = new URL(site.url);
+                          
+                          // Use DuckDuckGo's favicon service instead of Google's
+                          target.src = `https://icons.duckduckgo.com/ip3/${url.hostname}.ico`;
+                          
+                          // Log when using DuckDuckGo fallback
+                          console.log(`Using DuckDuckGo favicon for: ${url.hostname}`);
                         }}
                       />
                     ) : (

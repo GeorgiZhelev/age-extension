@@ -3,6 +3,7 @@ import AgeCounter from './components/AgeCounter'
 import Calendar from './components/Calendar'
 import TodoList from './components/TodoList'
 import MostVisited from './components/MostVisited'
+import TimeProgress from './components/TimeProgress'
 import './App.css'
 
 function App() {
@@ -27,9 +28,14 @@ function App() {
           <TodoList />
         </div>
         
-        {/* Most Visited (smaller at the bottom) */}
-        <div className="col-span-9 col-start-1">
+        {/* Bottom row */}
+        <div className="col-span-6 col-start-1">
           <MostVisited />
+        </div>
+        
+        {/* Time Progress (20% width) */}
+        <div className="col-span-3 col-start-7">
+          <TimeProgress />
         </div>
       </div>
     </div>
