@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 const TimeProgress: React.FC = () => {
   const [progress, setProgress] = useState({
     day: 0,
-    week: 0,
     month: 0,
     year: 0
   });
@@ -17,10 +16,6 @@ const TimeProgress: React.FC = () => {
       const elapsedMsInDay = now.getHours() * 3600000 + now.getMinutes() * 60000 + now.getSeconds() * 1000 + now.getMilliseconds();
       const dayProgress = (elapsedMsInDay / totalMsInDay) * 100;
       
-      const dayOfWeek = now.getDay(); // 0 (Sunday) through 6 (Saturday)
-      const adjustedDayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to 0 (Monday) through 6 (Sunday)
-      const weekProgress = ((adjustedDayOfWeek * 24 * 60 * 60 * 1000 + elapsedMsInDay) / (7 * 24 * 60 * 60 * 1000)) * 100;
-      
       // Month progress
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
       const monthProgress = ((now.getDate() - 1 + elapsedMsInDay / totalMsInDay) / daysInMonth) * 100;
@@ -32,7 +27,6 @@ const TimeProgress: React.FC = () => {
       
       setProgress({
         day: dayProgress,
-        week: weekProgress,
         month: monthProgress,
         year: yearProgress
       });
@@ -64,10 +58,9 @@ const TimeProgress: React.FC = () => {
   return (
     <div className="bg-neutral-900 p-6 rounded-lg shadow-lg h-full flex flex-col justify-center">
       <h2 className="text-xl font-semibold text-neutral-200 mb-6 font-sans">Time Progress</h2>
-      {renderProgressBar("Day", progress.day)}
-      {renderProgressBar("Week", progress.week)}
-      {renderProgressBar("Month", progress.month)}
       {renderProgressBar("Year", progress.year)}
+      {renderProgressBar("Month", progress.month)}
+      {renderProgressBar("Day", progress.day)}
     </div>
   );
 };
