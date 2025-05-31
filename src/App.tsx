@@ -30,7 +30,7 @@ function App() {
           <MostVisited />
         </div>
         
-        {/* Time Progress (20% width) */}
+        {/* Time Progress */}
         <div className="col-span-3 col-start-7">
           <TimeProgress />
         </div>

@@ -47,10 +47,10 @@ const CumulativeView: React.FC<CumulativeViewProps> = ({
         ))}
       </div>
       
-      <div className="h-64 bg-neutral-800 rounded border border-neutral-700 p-2">
+      <div className="h-48 bg-neutral-800 rounded border border-neutral-700 p-1">
         <ResponsiveLine
           data={chartData}
-          margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
+          margin={{ top: 5, right: 10, bottom: 40, left: 25 }}
           xScale={{ type: 'point' }}
           yScale={{
             type: 'linear',
@@ -59,22 +59,22 @@ const CumulativeView: React.FC<CumulativeViewProps> = ({
             stacked: false,
           }}
           axisBottom={{
-            tickSize: 5,
-            tickPadding: 5,
+            tickSize: 3,
+            tickPadding: 3,
             tickRotation: -45,
             format: (value) => value.slice(5), // Show only MM-DD part
-            legend: 'Date',
-            legendOffset: 40,
+            legend: '',
+            legendOffset: 30,
             legendPosition: 'middle',
             // Show fewer ticks on x-axis to avoid cluttering
-            tickValues: chartData[0]?.data.map((d, i) => i % 3 === 0 ? d.x : '').filter(Boolean)
+            tickValues: chartData[0]?.data.map((d, i) => i % 5 === 0 ? d.x : '').filter(Boolean)
           }}
           axisLeft={{
-            tickSize: 5,
-            tickPadding: 5,
+            tickSize: 3,
+            tickPadding: 3,
             tickRotation: 0,
-            legend: 'Completions',
-            legendOffset: -40,
+            legend: '',
+            legendOffset: -20,
             legendPosition: 'middle',
             truncateTickAt: 0,
           }}
@@ -121,7 +121,7 @@ const CumulativeView: React.FC<CumulativeViewProps> = ({
               } else {
                 formattedDate = `${getDayName(date)}, ${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
               }
-            } catch (e) {
+            } catch {
               // If any parsing errors, just show the raw string
               formattedDate = dateStr;
             }
